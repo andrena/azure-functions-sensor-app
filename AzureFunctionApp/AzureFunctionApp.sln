@@ -12,8 +12,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Templates", "Templates", "{03BCD536-3EA5-4848-AC09-0335DF8305E5}"
 	ProjectSection(SolutionItems) = preProject
 		AzureFunction.Infrastructure\Templates\deploy.ps1 = AzureFunction.Infrastructure\Templates\deploy.ps1
-		AzureFunction.Infrastructure\Templates\resourceGroup.iac.json = AzureFunction.Infrastructure\Templates\resourceGroup.iac.json
-		AzureFunction.Infrastructure\Templates\resourceGroup.docker.iac.json = AzureFunction.Infrastructure\Templates\resourceGroup.docker.iac.json
+		AzureFunction.Infrastructure\Templates\resourceGroup.iac.bicep = AzureFunction.Infrastructure\Templates\resourceGroup.iac.bicep
+		AzureFunction.Infrastructure\Templates\resourceGroup.container.iac.bicep = AzureFunction.Infrastructure\Templates\resourceGroup.container.iac.bicep
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Pipelines", "Pipelines", "{722D1655-F669-47F0-AE41-C9AFA38B034F}"
@@ -21,6 +21,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Pipelines", "Pipelines", "{
 		AzureFunction.Infrastructure\Pipelines\build.yml = AzureFunction.Infrastructure\Pipelines\build.yml
 		AzureFunction.Infrastructure\Pipelines\build_Docker.yml = AzureFunction.Infrastructure\Pipelines\build_Docker.yml
 		AzureFunction.Infrastructure\Pipelines\Dockerfile = AzureFunction.Infrastructure\Pipelines\Dockerfile
+		AzureFunction.Infrastructure\Pipelines\azure-resource-group-deployment.yml = AzureFunction.Infrastructure\Pipelines\azure-resource-group-deployment.yml
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AzureFunction.Tests", "AzureFunction.Tests\AzureFunction.Tests.csproj", "{D994EAF8-2048-4017-B30A-894966D52CDE}"

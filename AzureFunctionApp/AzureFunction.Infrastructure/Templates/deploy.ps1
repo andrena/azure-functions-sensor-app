@@ -18,10 +18,7 @@
     The deployment name.
 
  .PARAMETER templateFilePath
-    Optional, path to the template file. Defaults to template.json.
-
- .PARAMETER parametersFilePath
-    Optional, path to the parameters file. Defaults to parameters.json. If file is not found, will prompt for parameter values based on template.
+    Optional, path to the template file. Defaults to resourceGroup.iac.bicep.
 #>
 
 param(
@@ -38,7 +35,7 @@ param(
  $deploymentName = "test-deployment",
 
  [string]
- $templateFilePath = "resourceGroup.iac.json"
+ $templateFilePath = "resourceGroup.iac.bicep"
 )
 
 #******************************************************************************

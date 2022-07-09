@@ -1,0 +1,53 @@
+parameters:
+- name: displayName
+  type: string
+  default: Deploy resource group infrastructure
+- name: azureSubscription
+  type: string
+- name: deploymentName
+  type: string
+- name: resourceGroupName
+  type: string
+- name: location
+  type: string 
+- name: deploymentMode
+  values:
+  - Complete
+  - Incremental
+  default: Incremental
+- name: templateFile
+  type: string
+- name: templateParametersFile
+  type: string
+  default: ''
+- name: additionalParameters
+  type: string
+  default: ''
+- name: whatIf
+  type: boolean
+  default: false
+
+steps:
+- task: AzureCLI@2
+  displayName: '${{ parameters.displayName }}'
+  inputs:
+    azureSubscription: '${{ parameters.azureSubscription }}'
+    scriptType: 'pscore'
+    scriptLocation: 'inlineScript'
+    inlineScript: |
+      if ("${{ parameters.whatIf }}" -ne "true") {
+          az group create --name "${{ parameters.resourceGroupName }}" --location "${{ parameters.location }}"
+      }
+      $optionalParams=@()
+      if ("${{ parameters.templateParametersFile }}" -and "${{ parameters.templateParametersFile }}" -ne "") {
+          $optionalParams += "--parameters"
+          $optionalParams += "@${{ parameters.templateParametersFile }}"
+      }
+      if ("${{ parameters.additionalParameters }}" -and "${{ parameters.additionalParameters }}" -ne "") {
+          $optionalParams += "--parameters"
+          $optionalParams += "${{ parameters.additionalParameters }}".Split(" ")
+      }
+      if ("${{ parameters.whatIf }}" -eq "true") {
+          $optionalParams += "--what-if"
+      }
+      az deployment group create --mode ${{ parameters.deploymentMode }} --name "${{ parameters.deploymentName }}" --resource-group "${{ parameters.resourceGroupName }}" --template-file "${{ parameters.templateFile }}" @optionalParams

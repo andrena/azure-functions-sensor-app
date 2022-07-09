@@ -18,9 +18,9 @@ stages:
             clean: true
 
           - task: UseDotNet@2
-            displayName: 'Use .Net Core sdk 3.x'
+            displayName: 'Use .Net Core sdk 6.x'
             inputs:
-              version: 3.1.x
+              version: 6.0.x
 
           - task: DotNetCoreCLI@2
             displayName: 'dotnet restore'
@@ -33,7 +33,7 @@ stages:
             inputs:
               command: 'test'
               projects: '**/*.csproj'
-              arguments: '--no-restore --configuration Release --framework netcoreapp3.1'
+              arguments: '--no-restore --configuration Release --framework net6.0'
 
           - task: DotNetCoreCLI@2
             displayName: 'dotnet publish'
@@ -41,13 +41,23 @@ stages:
               command: 'publish'
               projects: 'AzureFunctionApp/AzureFunction.App/AzureFunction.App.csproj'
               publishWebProjects: false
-              arguments: '--no-restore --no-build --configuration Release --output $(build.artifactstagingdirectory) --framework netcoreapp3.1'
+              arguments: '--no-restore --no-build --configuration Release --output $(build.artifactstagingdirectory) --framework net6.0'
+              
+          - template: azure-resource-group-deployment.yml
+            parameters:
+              displayName: Check resource template
+              azureSubscription: '$(azureResourceManagerConnection)'
+              deploymentName: 'check'
+              resourceGroupName: '$(resourceGroupName)'
+              location: '$(location)'
+              templateFile: 'AzureFunctionApp/AzureFunction.Infrastructure/Templates/resourceGroup.iac.bicep'
+              whatIf: true
 
           - task: CopyFiles@2
             displayName: 'Copy resource template to artifacts'
             inputs:
               SourceFolder: AzureFunctionApp/AzureFunction.Infrastructure/Templates 
-              Contents: resourceGroup.iac.json
+              Contents: 'resourceGroup.iac.bicep'
               TargetFolder: '$(build.artifactstagingdirectory)'
 
           - publish: $(build.artifactstagingdirectory)
@@ -57,7 +67,7 @@ stages:
   
   - stage: Deploy
     displayName: Deploy function app
-    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    condition: succeeded()
     jobs:
       - deployment: Deploy
         pool:
@@ -69,20 +79,15 @@ stages:
               steps:
                 - download: current
                   artifact: drop
-
-                - task: AzureResourceManagerTemplateDeployment@3
-                  displayName: Deploy resource group infrastructure
-                  inputs:
-                    deploymentScope: 'Resource Group'
-                    azureResourceManagerConnection: $(azureResourceManagerConnection)
-                    subscriptionId: $(subscriptionId)
-                    action: 'Create Or Update Resource Group'
-                    resourceGroupName: $(resourceGroupName)
-                    location: $(location)
-                    templateLocation: 'Linked artifact'
-                    csmFile: '$(Pipeline.Workspace)/drop/resourceGroup.iac.json'
-                    deploymentMode: 'Incremental'
+                  
+                - template: azure-resource-group-deployment.yml
+                  parameters:
+                    displayName: Deploy resource group infrastructure
+                    azureSubscription: '$(azureResourceManagerConnection)'
                     deploymentName: 'continuous-deployment'
+                    resourceGroupName: '$(resourceGroupName)'
+                    location: '$(location)'
+                    templateFile: '$(Pipeline.Workspace)/drop/resourceGroup.iac.bicep'
 
                 - task: AzureFunctionApp@1
                   displayName: Deploy function app
@@ -91,5 +96,5 @@ stages:
                     appType: 'functionAppLinux'
                     appName: $(appName)
                     package: '$(Pipeline.Workspace)/drop/AzureFunction.App.zip'
-                    appSettings: '-FUNCTIONS_EXTENSION_VERSION ~3'
-                    runtimeStack: 'DOCKER|mcr.microsoft.com/azure-functions/dotnet:3.0-appservice'
+                    appSettings: '-FUNCTIONS_EXTENSION_VERSION ~4'
+                    runtimeStack: 'DOCKER|mcr.microsoft.com/azure-functions/dotnet:4-appservice'

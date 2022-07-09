@@ -15,13 +15,13 @@ namespace AzureFunction.Tests.Services
     [TestClass]
     public class SensorInputServiceTests
     {
-        private static readonly SensorInput SensorInput = new SensorInput
+        private static readonly SensorInput SensorInput = new()
         {
             SensorBoxId = "test",
             Timestamp = DateTimeOffset.UtcNow,
             Data = new List<SensorData>
             {
-                new SensorData
+                new()
                 {
                     Type = SensorType.Temperature,
                     Values = new List<double> { 1, 2, 3 }

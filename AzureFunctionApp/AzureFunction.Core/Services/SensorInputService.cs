@@ -32,6 +32,10 @@ namespace AzureFunction.Core.Services
             foreach (var sensorData in input.Data)
             {
                 var sensor = await _sensorRepository.GetByBoxIdAndTypeAsync(input.SensorBoxId, sensorData.Type);
+                if (sensor == null)
+                {
+                    throw new InvalidOperationException($"Sensor with box id {input.SensorBoxId} and type {sensorData.Type} not found.");
+                }
                 AddAggregatedData(input, aggregatedSensorData, sensor, sensorData);
             }
 

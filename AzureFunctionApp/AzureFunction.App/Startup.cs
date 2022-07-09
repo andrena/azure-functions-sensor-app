@@ -1,5 +1,4 @@
 ﻿using AzureFunction.App;
-using AzureFunction.App.Authentication;
 using AzureFunction.Core.Interfaces;
 using AzureFunction.Core.Repositories;
 using AzureFunction.Core.Services;
@@ -14,7 +13,7 @@ using Microsoft.Extensions.Logging;
 
 namespace AzureFunction.App
 {
-    public class Startup : FunctionsStartup, IWebJobsStartup
+    public class Startup : FunctionsStartup, IWebJobsStartup2
     {
         public override void Configure(IFunctionsHostBuilder builder)
         {
@@ -31,10 +30,9 @@ namespace AzureFunction.App
                 .AddScoped<ISensorService, SensorService>();
         }
 
-        void IWebJobsStartup.Configure(IWebJobsBuilder builder)
+        void IWebJobsStartup2.Configure(WebJobsBuilderContext context, IWebJobsBuilder builder)
         {
             Configure(builder);
-            builder.AddExtension<PrincipalExtensionProvider>();
         }
     }
 }

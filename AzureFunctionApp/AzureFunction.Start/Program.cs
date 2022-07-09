@@ -3,13 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using AzureFunction.Core.Models;
 using AzureFunction.Core.Repositories;
 using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-using Newtonsoft.Json.Serialization;
 
 namespace AzureFunction.Start
 {
@@ -32,18 +31,11 @@ namespace AzureFunction.Start
                 .AddJsonFile("local.settings.json", false)
                 .Build();
 
-            JsonConvert.DefaultSettings = () => new JsonSerializerSettings
+            var defaultJsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web)
             {
-                ContractResolver = new DefaultContractResolver
-                {
-                    NamingStrategy = new CamelCaseNamingStrategy()
-                },
                 Converters =
                 {
-                    new StringEnumConverter
-                    {
-                        NamingStrategy = new DefaultNamingStrategy()
-                    }
+                    new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
                 }
             };
             var random = new Random();
@@ -107,7 +99,7 @@ namespace AzureFunction.Start
                         .ToList()
                 };
                 sensorBox.LastSend = utcNow;
-                var content = new StringContent(JsonConvert.SerializeObject(sensorInput), Encoding.UTF8, "application/json");
+                var content = new StringContent(JsonSerializer.Serialize(sensorInput, defaultJsonOptions), Encoding.UTF8, "application/json");
                 var task = httpClient.PostAsync(uri, content);
                 tasks.Add(task);
                 taskChunk.Add(task);

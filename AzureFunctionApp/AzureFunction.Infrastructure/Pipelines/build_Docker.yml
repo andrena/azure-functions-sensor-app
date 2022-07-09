@@ -18,9 +18,9 @@ stages:
             clean: true
 
           - task: UseDotNet@2
-            displayName: 'Use .Net Core sdk 3.x'
+            displayName: 'Use .Net Core sdk 6.x'
             inputs:
-              version: 3.1.x
+              version: 6.0.x
 
           - task: DotNetCoreCLI@2
             displayName: 'dotnet restore'
@@ -33,7 +33,7 @@ stages:
             inputs:
               command: 'test'
               projects: '**/*.csproj'
-              arguments: '--no-restore --configuration Release --framework netcoreapp3.1'
+              arguments: '--no-restore --configuration Release --framework net6.0'
 
           - task: DotNetCoreCLI@2
             displayName: 'Create Package'
@@ -41,40 +41,53 @@ stages:
               command: 'publish'
               projects: 'AzureFunctionApp/AzureFunction.App/AzureFunction.App.csproj'
               publishWebProjects: false
-              arguments: '--no-restore --no-build --configuration Release --output $(Build.BinariesDirectory)/output/ --framework netcoreapp3.1'
+              arguments: '--no-restore --no-build --configuration Release --output $(Build.BinariesDirectory)/output/ --framework net6.0'
               zipAfterPublish: false
               
           - task: Docker@2
-            displayName: 'Build Docker image'
+            displayName: 'Build container image'
             inputs:
-              containerRegistry: '$(dockerRegistry)'
-              repository: 'functionapp'
+              containerRegistry: '$(containerRegistry)'
+              repository: 'sensor-app'
               command: build
               Dockerfile: './AzureFunctionApp/AzureFunction.Infrastructure/Pipelines/Dockerfile'
               buildContext: '$(Build.BinariesDirectory)/output/AzureFunction.App/'
               tags: |
                 $(Build.BuildNumber)
+                latest
               addPipelineData: false
 
           - task: Docker@2
-            displayName: 'Push Docker image'
+            displayName: 'Push container image'
             inputs:
-              containerRegistry: '$(dockerRegistry)'
-              repository: 'functionapp'
+              containerRegistry: '$(containerRegistry)'
+              repository: 'sensor-app'
               command: push
               tags: |
                 $(Build.BuildNumber)
+                latest
               addPipelineData: false
 
           - pwsh: |
               rm -rf $(Build.BinariesDirectory)/output/AzureFunction.App
             displayName: 'Clean up'
 
+          - template: azure-resource-group-deployment.yml
+            parameters:
+              displayName: Check resource template
+              azureSubscription: '$(azureResourceManagerConnection)'
+              deploymentName: 'check'
+              resourceGroupName: '$(resourceGroupName)'
+              location: '$(location)'
+              templateFile: 'AzureFunctionApp/AzureFunction.Infrastructure/Templates/resourceGroup.container.iac.bicep'
+              whatIf: true
+              additionalParameters: 'containerRegistryUrl=$(containerRegistryUrl) containerRegistryUser=$(containerRegistryUser) containerRegistryPassword=$(containerRegistryPassword)'
+
           - task: CopyFiles@2
             displayName: 'Copy resource template to artifacts'
             inputs:
               SourceFolder: AzureFunctionApp/AzureFunction.Infrastructure/Templates 
-              Contents: '*.json'
+              Contents: 'resourceGroup.container.iac.bicep'
               TargetFolder: '$(build.artifactstagingdirectory)'
 
           - publish: $(build.artifactstagingdirectory)
@@ -97,25 +110,20 @@ stages:
                 - download: current
                   artifact: drop
 
-                - task: AzureResourceManagerTemplateDeployment@3
-                  displayName: Deploy resource group infrastructure
-                  inputs:
-                    deploymentScope: 'Resource Group'
-                    azureResourceManagerConnection: $(azureResourceManagerConnection)
-                    subscriptionId: $(subscriptionId)
-                    action: 'Create Or Update Resource Group'
-                    resourceGroupName: $(resourceGroupName)
-                    location: $(location)
-                    templateLocation: 'Linked artifact'
-                    csmFile: '$(Pipeline.Workspace)/drop/resourceGroup.docker.iac.json'
-                    deploymentMode: 'Incremental'
-                    deploymentName: 'continuous-deployment'
-                    overrideParameters: '-dockerRegistryUrl "$(dockerRegistryUrl)" -dockerRegistryUser "$(dockerRegistryUser)" -dockerRegistryPassword "$(dockerRegistryPassword)"'
+                - template: azure-resource-group-deployment.yml
+                  parameters:
+                    displayName: Deploy resource group infrastructure
+                    azureSubscription: '$(azureResourceManagerConnection)'
+                    deploymentName: 'check'
+                    resourceGroupName: '$(resourceGroupName)'
+                    location: '$(location)'
+                    templateFile: 'resourceGroup.container.iac.bicep'
+                    additionalParameters: 'containerRegistryUrl=$(containerRegistryUrl) containerRegistryUser=$(containerRegistryUser) containerRegistryPassword=$(containerRegistryPassword)'
 
                 - task: AzureFunctionAppContainer@1
                   displayName: Deploy function app as container
                   inputs:
                     azureSubscription: $(azureResourceManagerConnection)
                     appName: $(appName)
-                    imageName: '$(dockerRegistryUrl)/functionapp:$(Build.BuildNumber)'
-                    appSettings: '-FUNCTIONS_EXTENSION_VERSION ~3'
+                    imageName: '$(dockerRegistryUrl)/sensor-app:$(Build.BuildNumber)'
+                    appSettings: '-FUNCTIONS_EXTENSION_VERSION ~4'

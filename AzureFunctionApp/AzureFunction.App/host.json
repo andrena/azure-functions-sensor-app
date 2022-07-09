@@ -3,9 +3,10 @@
   "logging": {
     "logLevel": {
       "default": "Information",
-      "Host": "Warning",
-      "Function": "Warning",
-      "Microsoft": "Warning" 
+      "Host": "Error",
+      "Function": "Error",
+      "Microsoft": "Error",
+      "Azure": "Error"
     }
   }
 }
