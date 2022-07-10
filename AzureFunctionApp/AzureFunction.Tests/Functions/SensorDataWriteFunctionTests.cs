@@ -7,28 +7,27 @@ using FakeItEasy;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace AzureFunction.Tests.Functions
+namespace AzureFunction.Tests.Functions;
+
+[TestClass]
+public class SensorDataWriteFunctionTests
 {
-    [TestClass]
-    public class SensorDataWriteFunctionTests
+    [TestMethod]
+    public async Task WritesAggregatedData()
     {
-        [TestMethod]
-        public async Task WritesAggregatedData()
+        var writeService = A.Fake<ISensorDataService>();
+        var function = new SensorDataWriteFunction(writeService, A.Fake<ILogger<SensorDataWriteFunction>>());
+
+        var aggregatedSensorData = new AggregatedSensorData
         {
-            var writeService = A.Fake<ISensorDataService>();
-            var function = new SensorDataWriteFunction(writeService, A.Fake<ILogger<SensorDataWriteFunction>>());
+            SensorBoxId = "test",
+            SensorType = SensorType.Temperature,
+            AggregationType = AggregationType.Mean,
+            CreatedAt = DateTimeOffset.UtcNow,
+            Value = 1
+        };
+        await function.Run(aggregatedSensorData);
 
-            var aggregatedSensorData = new AggregatedSensorData
-            {
-                SensorBoxId = "test",
-                SensorType = SensorType.Temperature,
-                AggregationType = AggregationType.Mean,
-                CreatedAt = DateTimeOffset.UtcNow,
-                Value = 1
-            };
-            await function.Run(aggregatedSensorData);
-
-            A.CallTo(() => writeService.InsertAsync(aggregatedSensorData)).MustHaveHappened();
-        }
+        A.CallTo(() => writeService.InsertAsync(aggregatedSensorData)).MustHaveHappened();
     }
 }

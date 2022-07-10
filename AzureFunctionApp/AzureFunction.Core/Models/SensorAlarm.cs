@@ -1,28 +1,27 @@
 ﻿using System;
 
-namespace AzureFunction.Core.Models
+namespace AzureFunction.Core.Models;
+
+public class SensorAlarm
 {
-    public class SensorAlarm
+    public SensorAlarm()
     {
-        public SensorAlarm()
-        {
-            FiredAt = DateTimeOffset.UtcNow;
-            Identifier = Guid.NewGuid().ToString();
-        }
+        FiredAt = DateTimeOffset.UtcNow;
+        Identifier = Guid.NewGuid().ToString();
+    }
 
-        public string SensorBoxId { get; set; }
+    public string SensorBoxId { get; set; } = null!;
         
-        public string Identifier { get; set; }
+    public string Identifier { get; set; }
 
-        public SensorType SensorType { get; set; }
+    public SensorType SensorType { get; set; }
 
-        public DateTimeOffset FiredAt { get; set; }
+    public DateTimeOffset FiredAt { get; set; }
 
-        public AlarmStatus Status { get; set; }
-    }
+    public AlarmStatus Status { get; set; }
+}
 
-    public enum AlarmStatus
-    {
-        InvalidData, Dead, Closed
-    }
+public enum AlarmStatus
+{
+    InvalidData, Dead, Closed
 }

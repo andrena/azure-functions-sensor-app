@@ -2,10 +2,9 @@
 using System.Threading.Tasks;
 using AzureFunction.Core.Models;
 
-namespace AzureFunction.Core.Interfaces
+namespace AzureFunction.Core.Interfaces;
+
+public interface ISensorInputService
 {
-    public interface ISensorInputService
-    {
-        Task<IEnumerable<AggregatedSensorData>> ProcessInputAsync(SensorInput input);
-    }
+    Task<IEnumerable<AggregatedSensorData>> ProcessInputAsync(SensorInput input);
 }

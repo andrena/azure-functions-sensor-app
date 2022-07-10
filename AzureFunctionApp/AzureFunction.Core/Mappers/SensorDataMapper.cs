@@ -2,19 +2,18 @@ using System;
 using Azure.Data.Tables;
 using AzureFunction.Core.Models;
 
-namespace AzureFunction.Core.Mappers
+namespace AzureFunction.Core.Mappers;
+
+public static class SensorDataMapper
 {
-    public static class SensorDataMapper
+    public static TableEntity Map(AggregatedSensorData sensorData)
     {
-        public static TableEntity Map(AggregatedSensorData sensorData)
+        return new TableEntity(sensorData.SensorBoxId, Guid.NewGuid().ToString())
         {
-            return new TableEntity(sensorData.SensorBoxId, Guid.NewGuid().ToString())
-            {
-                [nameof(AggregatedSensorData.SensorType)] = sensorData.SensorType.ToString("G"),
-                [nameof(AggregatedSensorData.AggregationType)] = sensorData.AggregationType.ToString("G"),
-                Timestamp = sensorData.CreatedAt,
-                [nameof(AggregatedSensorData.Value)] = sensorData.Value
-            };
-        }
+            [nameof(AggregatedSensorData.SensorType)] = sensorData.SensorType.ToString("G"),
+            [nameof(AggregatedSensorData.AggregationType)] = sensorData.AggregationType.ToString("G"),
+            Timestamp = sensorData.CreatedAt,
+            [nameof(AggregatedSensorData.Value)] = sensorData.Value
+        };
     }
 }

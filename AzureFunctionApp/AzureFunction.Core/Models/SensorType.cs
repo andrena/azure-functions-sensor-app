@@ -1,7 +1,6 @@
-﻿namespace AzureFunction.Core.Models
+﻿namespace AzureFunction.Core.Models;
+
+public enum SensorType
 {
-    public enum SensorType
-    {
-        Temperature, Humidity, Pressure, Quality
-    }
+    Temperature, Humidity, Pressure, Quality
 }

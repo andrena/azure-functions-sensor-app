@@ -1,11 +1,10 @@
 ﻿using System.Threading.Tasks;
 using AzureFunction.Core.Models;
 
-namespace AzureFunction.Core.Interfaces
+namespace AzureFunction.Core.Interfaces;
+
+public interface ISensorValidationService
 {
-    public interface ISensorValidationService
-    {
-        Task ValidateSensorDataAsync(AggregatedSensorData input);
-        Task CheckSensorsAndAlarmsAsync();
-    }
+    Task ValidateSensorDataAsync(AggregatedSensorData input);
+    Task CheckSensorsAndAlarmsAsync();
 }

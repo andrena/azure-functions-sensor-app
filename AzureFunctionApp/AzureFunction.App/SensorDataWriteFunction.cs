@@ -4,23 +4,22 @@ using AzureFunction.Core.Models;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Logging;
 
-namespace AzureFunction.App
+namespace AzureFunction.App;
+
+public class SensorDataWriteFunction
 {
-    public class SensorDataWriteFunction
+    private readonly ISensorDataService _sensorDataService;
+    private readonly ILogger<SensorDataWriteFunction> _logger;
+
+    public SensorDataWriteFunction(ISensorDataService sensorDataService, ILogger<SensorDataWriteFunction> logger)
     {
-        private readonly ISensorDataService _sensorDataService;
-        private readonly ILogger<SensorDataWriteFunction> _logger;
+        _sensorDataService = sensorDataService;
+        _logger = logger;
+    }
 
-        public SensorDataWriteFunction(ISensorDataService sensorDataService, ILogger<SensorDataWriteFunction> logger)
-        {
-            _sensorDataService = sensorDataService;
-            _logger = logger;
-        }
-
-        [FunctionName("SensorDataWriteFunction")]
-        public async Task Run([QueueTrigger("validated-sensor-data")] AggregatedSensorData aggregatedSensorData)
-        {
-            await _sensorDataService.InsertAsync(aggregatedSensorData);
-        }
+    [FunctionName("SensorDataWriteFunction")]
+    public async Task Run([QueueTrigger("validated-sensor-data")] AggregatedSensorData aggregatedSensorData)
+    {
+        await _sensorDataService.InsertAsync(aggregatedSensorData);
     }
 }

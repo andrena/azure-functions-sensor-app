@@ -10,36 +10,35 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
-namespace AzureFunction.App
+namespace AzureFunction.App;
+
+public class SensorFunction
 {
-    public class SensorFunction
+    private readonly ISensorService _sensorService;
+    private readonly ILogger<SensorFunction> _logger;
+
+    public SensorFunction(ISensorService sensorService, ILogger<SensorFunction> logger)
     {
-        private readonly ISensorService _sensorService;
-        private readonly ILogger<SensorFunction> _logger;
+        _sensorService = sensorService;
+        _logger = logger;
+    }
 
-        public SensorFunction(ISensorService sensorService, ILogger<SensorFunction> logger)
+    [FunctionName("GetSensor")]
+    public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")]
+        HttpRequest request,
+        CancellationToken cancellationToken)
+    {
+        try
         {
-            _sensorService = sensorService;
-            _logger = logger;
+            var sensorBoxId = request.GetQueryParameterDictionary()["sensorBoxId"];
+            var sensorType = Enum.Parse<SensorType>(request.GetQueryParameterDictionary()["sensorType"]);
+            var sensor = await _sensorService.GetByBoxIdAndTypeAsync(sensorBoxId, sensorType);
+
+            return sensor != null ? new OkObjectResult(sensor) : new NotFoundResult();
         }
-
-        [FunctionName("GetSensor")]
-        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")]
-            HttpRequest request,
-            CancellationToken cancellationToken)
+        catch (Exception e) when (e is KeyNotFoundException or ArgumentException)
         {
-            try
-            {
-                var sensorBoxId = request.GetQueryParameterDictionary()["sensorBoxId"];
-                var sensorType = Enum.Parse<SensorType>(request.GetQueryParameterDictionary()["sensorType"]);
-                var sensor = await _sensorService.GetByBoxIdAndTypeAsync(sensorBoxId, sensorType);
-
-                return sensor != null ? (IActionResult)new OkObjectResult(sensor) : new NotFoundResult();
-            }
-            catch (Exception e) when (e is KeyNotFoundException || e is ArgumentException)
-            {
-                return new BadRequestResult();
-            }
+            return new BadRequestResult();
         }
     }
 }

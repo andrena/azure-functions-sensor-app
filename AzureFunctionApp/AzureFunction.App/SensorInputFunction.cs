@@ -8,41 +8,40 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
 
-namespace AzureFunction.App
+namespace AzureFunction.App;
+
+public class SensorInputFunction
 {
-    public class SensorInputFunction
+    private readonly ISensorInputService _inputService;
+    private readonly ILogger<SensorInputFunction> _logger;
+
+    public SensorInputFunction(ISensorInputService inputService, ILogger<SensorInputFunction> logger)
     {
-        private readonly ISensorInputService _inputService;
-        private readonly ILogger<SensorInputFunction> _logger;
+        _inputService = inputService;
+        _logger = logger;
+    }
 
-        public SensorInputFunction(ISensorInputService inputService, ILogger<SensorInputFunction> logger)
+    [FunctionName("SensorInput")]
+    public async Task<IActionResult> Run(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] SensorInput input,
+        [Queue("aggregated-sensor-data")] IAsyncCollector<AggregatedSensorData> output,
+        CancellationToken cancellationToken)
+    {
+        try
         {
-            _inputService = inputService;
-            _logger = logger;
+            var aggregatedSensorData = await _inputService.ProcessInputAsync(input);
+            foreach (var sensorData in aggregatedSensorData)
+            {
+                await output.AddAsync(sensorData, cancellationToken);
+            }
+            await output.FlushAsync(cancellationToken);
+
+            return new OkResult();
         }
-
-        [FunctionName("SensorInput")]
-        public async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] SensorInput input,
-            [Queue("aggregated-sensor-data")] IAsyncCollector<AggregatedSensorData> output,
-            CancellationToken cancellationToken)
+        catch (Exception e)
         {
-            try
-            {
-                var aggregatedSensorData = await _inputService.ProcessInputAsync(input);
-                foreach (var sensorData in aggregatedSensorData)
-                {
-                    await output.AddAsync(sensorData, cancellationToken);
-                }
-                await output.FlushAsync(cancellationToken);
-
-                return new OkResult();
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, "Error while executing function 'Sensorinput'. Stack trace: {StackTrace}", e.StackTrace);
-                throw;
-            }
+            _logger.LogError(e, "Error while executing function 'Sensorinput'. Stack trace: {StackTrace}", e.StackTrace);
+            throw;
         }
     }
 }
